@@ -1,15 +1,16 @@
 # Digital NSW Standards PDF Compiler
 
-A Python tool that scrapes the Digital NSW website and compiles all delivery-related content into a single, well-structured PDF document with maintained hyperlinks and logical ordering.
+A Python tool that scrapes the Digital NSW website and compiles delivery-related content into separate, comprehensive PDF documents with full internal content and maintained hyperlinks.
 
 ## Features
 
-- Scrapes all content from https://www.digital.nsw.gov.au/delivery
-- Maintains internal hyperlinks between sections
-- Preserves external links to resources
-- Creates a professional table of contents
-- Downloads and embeds images as base64
-- Generates a professionally formatted PDF with NSW Government branding
+- **Recursive Content Scraping**: Automatically follows and includes all internal links within each section
+- **Separate PDFs per Section**: Generates individual PDFs for each major delivery area
+- **Self-Contained Documents**: All linked content is included in the PDF - no external dependencies
+- **Internal Link Preservation**: Links between pages work within the PDF itself
+- **Automated GitHub Actions**: PDFs regenerate automatically when code is pushed
+- **Professional Formatting**: Table of contents, NSW Government branding, and clean typography
+- **Image Embedding**: Downloads and embeds all images as base64 for portability
 
 ## Installation
 
@@ -41,50 +42,57 @@ pip install -r requirements.txt
 
 ### Basic Usage
 
-Run with default configuration:
+Generate all PDFs:
 ```bash
 python main.py
 ```
 
 This will:
-1. Scrape all pages defined in `config/urls_config.json`
-2. Process HTML and images
-3. Generate `output/digital_nsw_standards.pdf`
+1. Scrape all sections defined in `config/urls_config.json`
+2. Recursively follow internal links within each section
+3. Process HTML and images
+4. Generate separate PDFs in the `output/` directory
 
 ### Advanced Options
 
 ```bash
-# Specify custom configuration file
-python main.py --config my_config.json
+# Generate a specific section only
+python main.py --section "Digital Service Toolkit"
 
-# Specify custom output path
-python main.py --output my_output.pdf
+# Specify custom output directory
+python main.py --output-dir my_output
 
-# Save intermediate HTML file for debugging
+# Save intermediate HTML files for debugging
 python main.py --save-html
+
+# Use custom configuration file
+python main.py --config my_config.json
 ```
 
 ## Configuration
 
 ### URL Configuration
 
-Edit `config/urls_config.json` to customize which pages to scrape:
+Edit `config/urls_config.json` to customize sections to scrape:
 
 ```json
 {
-  "metadata": {
-    "title": "Digital NSW Delivery Reference Guide",
-    "author": "Your Name",
-    "subject": "Digital Service Standards"
-  },
   "sections": [
     {
-      "section_name": "Section Name",
-      "priority": 1,
+      "section_name": "Digital Service Toolkit",
+      "description": "Description of section",
+      "base_path": "/delivery/digital-service-toolkit",
+      "output_filename": "digital-service-toolkit.pdf",
+      "max_depth": 3,
+      "metadata": {
+        "title": "Digital NSW - Digital Service Toolkit",
+        "author": "Compiled from Digital NSW",
+        "subject": "Digital Service Standards"
+      },
       "pages": [
         {
-          "title": "Page Title",
-          "url": "https://www.digital.nsw.gov.au/...",
+          "title": "Starting Page",
+          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit",
           "order": 1
         }
       ]
@@ -92,6 +100,11 @@ Edit `config/urls_config.json` to customize which pages to scrape:
   ]
 }
 ```
+
+**Key Configuration Options:**
+- `base_path`: Limits recursive scraping to URLs within this path
+- `max_depth`: How many levels deep to follow links (default: 3)
+- `output_filename`: Name of the generated PDF file
 
 ### Application Settings
 
@@ -126,23 +139,39 @@ digital-nsw-pdf/
 
 ## How It Works
 
-1. **Scraping**: Fetches HTML content from configured URLs with polite delays
-2. **Processing**: Cleans HTML, processes links, and handles images
-3. **Compilation**: Combines all pages with a title page and table of contents
-4. **PDF Generation**: Uses WeasyPrint to create a professional PDF with CSS styling
+1. **Recursive Scraping**: Starts from a root URL and follows all internal links within the section
+2. **Link Discovery**: Extracts internal links from each page within the configured `base_path`
+3. **Content Processing**: Cleans HTML, converts links to PDF anchors, and embeds images
+4. **PDF Compilation**: Combines all discovered pages with a title page and table of contents
+5. **PDF Generation**: Uses WeasyPrint to create professional PDFs with CSS styling
 
-## Included Content
+Each section is processed independently, creating self-contained PDF documents with all referenced content included.
 
-The default configuration scrapes:
+## Generated PDFs
 
-- **Digital Service Toolkit**: Design standards, design system, resources
-- **Delivery Manual**: All phases (pre-discovery through live and retiring)
-- **Government Technology Platforms**: Platform documentation and FAQs
-- **Accessibility and Inclusivity**: Toolkit and guidelines
-- **Cyber Security**: Overview and resources
-- **State Digital Assets**: Reusable components
-- **NSW Automation Guide**: Automation lifecycle and maturity
-- **Test and Buy Innovation**: Innovation procurement
+The default configuration generates 7 separate PDFs:
+
+- **digital-service-toolkit.pdf**: Design standards, design system, delivery manual, resources, and all linked pages
+- **government-technology-platforms.pdf**: Platform documentation, products, privacy, and FAQs
+- **state-digital-assets.pdf**: Reusable components and assets
+- **accessibility-and-inclusivity-toolkit.pdf**: Accessibility guidelines and resources
+- **cyber-security.pdf**: Security guidance and resources
+- **nsw-automation-guide.pdf**: Automation implementation guidance
+- **test-and-buy-innovation.pdf**: Innovation procurement framework and journey
+
+Each PDF includes ALL pages linked from the main section page, up to the configured depth limit.
+
+## GitHub Actions Automation
+
+The repository includes a GitHub Actions workflow that automatically regenerates PDFs when code is pushed to the main branch.
+
+**Workflow features:**
+- Triggers on push to main or manual dispatch
+- Installs all system dependencies for WeasyPrint
+- Generates all PDFs
+- Commits updated PDFs back to the repository
+
+The workflow is defined in `.github/workflows/generate-pdfs.yml`.
 
 ## Troubleshooting
 
@@ -157,12 +186,16 @@ brew install cairo pango gdk-pixbuf libffi
 
 **Ubuntu/Debian**:
 ```bash
-sudo apt-get install python3-cffi python3-brotli libpango-1.0-0 libpangoft2-1.0-0
+sudo apt-get install python3-cffi python3-brotli libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf2.0-0
 ```
 
 ### Rate Limiting
 
 If you're being rate-limited, increase `REQUEST_DELAY` in `config/settings.py`.
+
+### Large PDF File Sizes
+
+Some sections (like "Test and Buy Innovation") may generate large PDFs (20+ MB) due to extensive content and embedded images. This is expected behavior when all linked content is included.
 
 ## Contributing
 

@@ -1,125 +1,73 @@
 {
-  "metadata": {
-    "title": "Digital NSW Delivery Reference Guide",
-    "author": "Compiled from Digital NSW",
-    "subject": "Digital Service Standards, Delivery Manual, and Guidelines"
-  },
   "sections": [
     {
-      "section_name": "Digital Service Toolkit - Core Standards",
+      "section_name": "Digital Service Toolkit",
       "description": "Essential design and delivery standards for NSW government digital services",
-      "priority": 1,
+      "base_path": "/delivery/digital-service-toolkit",
+      "output_filename": "digital-service-toolkit.pdf",
+      "max_depth": 3,
+      "metadata": {
+        "title": "Digital NSW - Digital Service Toolkit",
+        "author": "Compiled from Digital NSW",
+        "subject": "Digital Service Standards and Toolkit"
+      },
       "pages": [
         {
-          "title": "Design Standards",
-          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit/design-standards",
+          "title": "Digital Service Toolkit",
+          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit",
           "order": 1
-        },
-        {
-          "title": "Design System",
-          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit/design-system",
-          "order": 2
-        },
-        {
-          "title": "Resources",
-          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit/resources",
-          "order": 3
-        },
-        {
-          "title": "Activities and Templates",
-          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit/activities-and-templates",
-          "order": 4
-        },
-        {
-          "title": "Solutions",
-          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit/solutions",
-          "order": 5
-        }
-      ]
-    },
-    {
-      "section_name": "Delivery Manual - Service Lifecycle",
-      "description": "Comprehensive guidance on service delivery phases",
-      "priority": 2,
-      "pages": [
-        {
-          "title": "Delivery Manual Overview",
-          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit/delivery-manual",
-          "order": 1
-        },
-        {
-          "title": "Pre-discovery Phase",
-          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit/delivery-manual/pre-discovery-phase",
-          "order": 2
-        },
-        {
-          "title": "Discovery Phase",
-          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit/delivery-manual/discovery-phase",
-          "order": 3
-        },
-        {
-          "title": "Alpha Phase",
-          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit/delivery-manual/alpha-phase",
-          "order": 4
-        },
-        {
-          "title": "Beta Phase",
-          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit/delivery-manual/beta-phase",
-          "order": 5
-        },
-        {
-          "title": "Live Phase",
-          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit/delivery-manual/live-phase",
-          "order": 6
-        },
-        {
-          "title": "Retiring a Service",
-          "url": "https://www.digital.nsw.gov.au/delivery/digital-service-toolkit/delivery-manual/retiring-service",
-          "order": 7
         }
       ]
     },
     {
       "section_name": "Government Technology Platforms",
       "description": "Shared platforms and services for government agencies",
-      "priority": 3,
+      "base_path": "/delivery/government-technology-platforms",
+      "output_filename": "government-technology-platforms.pdf",
+      "max_depth": 3,
+      "metadata": {
+        "title": "Digital NSW - Government Technology Platforms",
+        "author": "Compiled from Digital NSW",
+        "subject": "Government Technology Platforms and Services"
+      },
       "pages": [
         {
-          "title": "Government Technology Platforms Overview",
+          "title": "Government Technology Platforms",
           "url": "https://www.digital.nsw.gov.au/delivery/government-technology-platforms",
           "order": 1
-        },
+        }
+      ]
+    },
+    {
+      "section_name": "State Digital Assets",
+      "description": "Reusable digital assets and components",
+      "base_path": "/delivery/state-digital-assets",
+      "output_filename": "state-digital-assets.pdf",
+      "max_depth": 3,
+      "metadata": {
+        "title": "Digital NSW - State Digital Assets",
+        "author": "Compiled from Digital NSW",
+        "subject": "State Digital Assets and Components"
+      },
+      "pages": [
         {
-          "title": "Platforms",
-          "url": "https://www.digital.nsw.gov.au/delivery/government-technology-platforms/platforms",
-          "order": 2
-        },
-        {
-          "title": "Privacy",
-          "url": "https://www.digital.nsw.gov.au/delivery/government-technology-platforms/privacy",
-          "order": 3
-        },
-        {
-          "title": "Protecting Customer and Government Data",
-          "url": "https://www.digital.nsw.gov.au/delivery/government-technology-platforms/protecting-customer-and-government-data",
-          "order": 4
-        },
-        {
-          "title": "Products",
-          "url": "https://www.digital.nsw.gov.au/delivery/government-technology-platforms/products",
-          "order": 5
-        },
-        {
-          "title": "Frequently Asked Questions",
-          "url": "https://www.digital.nsw.gov.au/delivery/government-technology-platforms/frequently-asked-questions",
-          "order": 6
+          "title": "State Digital Assets",
+          "url": "https://www.digital.nsw.gov.au/delivery/state-digital-assets",
+          "order": 1
         }
       ]
     },
     {
       "section_name": "Accessibility and Inclusivity",
       "description": "Making services accessible to all users",
-      "priority": 4,
+      "base_path": "/delivery/accessibility-and-inclusivity-toolkit",
+      "output_filename": "accessibility-and-inclusivity-toolkit.pdf",
+      "max_depth": 3,
+      "metadata": {
+        "title": "Digital NSW - Accessibility and Inclusivity Toolkit",
+        "author": "Compiled from Digital NSW",
+        "subject": "Accessibility and Inclusivity Guidelines"
+      },
       "pages": [
         {
           "title": "Accessibility and Inclusivity Toolkit",
@@ -131,23 +79,18 @@
     {
       "section_name": "Cyber Security",
       "description": "Security guidance and resources",
-      "priority": 5,
+      "base_path": "/delivery/cyber-security",
+      "output_filename": "cyber-security.pdf",
+      "max_depth": 3,
+      "metadata": {
+        "title": "Digital NSW - Cyber Security",
+        "author": "Compiled from Digital NSW",
+        "subject": "Cyber Security Guidance and Resources"
+      },
       "pages": [
         {
-          "title": "Cyber Security Overview",
+          "title": "Cyber Security",
           "url": "https://www.digital.nsw.gov.au/delivery/cyber-security",
-          "order": 1
-        }
-      ]
-    },
-    {
-      "section_name": "State Digital Assets",
-      "description": "Reusable digital assets and components",
-      "priority": 6,
-      "pages": [
-        {
-          "title": "State Digital Assets",
-          "url": "https://www.digital.nsw.gov.au/delivery/state-digital-assets",
           "order": 1
         }
       ]
@@ -155,7 +98,14 @@
     {
       "section_name": "NSW Automation Guide",
       "description": "Guidance on implementing automation in government services",
-      "priority": 7,
+      "base_path": "/delivery/nsw-automation-guide",
+      "output_filename": "nsw-automation-guide.pdf",
+      "max_depth": 3,
+      "metadata": {
+        "title": "Digital NSW - NSW Automation Guide",
+        "author": "Compiled from Digital NSW",
+        "subject": "Automation Implementation Guidance"
+      },
       "pages": [
         {
           "title": "NSW Automation Guide",
@@ -167,7 +117,14 @@
     {
       "section_name": "Test and Buy Innovation",
       "description": "Innovation procurement framework",
-      "priority": 8,
+      "base_path": "/delivery/test-and-buy-innovation",
+      "output_filename": "test-and-buy-innovation.pdf",
+      "max_depth": 3,
+      "metadata": {
+        "title": "Digital NSW - Test and Buy Innovation",
+        "author": "Compiled from Digital NSW",
+        "subject": "Innovation Procurement Framework"
+      },
       "pages": [
         {
           "title": "Test and Buy Innovation",

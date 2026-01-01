@@ -14,17 +14,32 @@ class PDFCompiler:
         self.config = config
         self.css_path = css_path or config.CUSTOM_CSS_PATH
 
-    def create_title_page(self, metadata):
-        """Generate title page HTML"""
+    def create_title_page(self, metadata, generation_timestamp):
+        """Generate title page HTML with important notice"""
+        formatted_date = generation_timestamp.strftime('%d %B %Y')
+        formatted_datetime = generation_timestamp.strftime('%d %B %Y at %H:%M %Z')
+
         return f"""
         <div class="title-page">
             <h1>{metadata.get('title', 'Digital NSW Standards')}</h1>
             <p class="subtitle">Reference Guide for Government Digital Roles</p>
             <p class="metadata">
-                Compiled: {datetime.now().strftime('%d %B %Y')}<br>
-                Source: digital.nsw.gov.au<br>
                 {metadata.get('author', '')}
             </p>
+
+            <div class="important-notice">
+                <h2>IMPORTANT NOTICE</h2>
+                <p>This document was automatically generated on <strong>{formatted_date}</strong> from
+                content published at <a href="https://www.digital.nsw.gov.au/delivery" class="website-link">https://www.digital.nsw.gov.au/delivery</a>.</p>
+
+                <p>This is a point-in-time snapshot and may not reflect the current state
+                of NSW Government policies, standards, or guidance.</p>
+
+                <p>For the most up-to-date information, please visit:<br>
+                <a href="https://www.digital.nsw.gov.au/delivery" class="website-link">https://www.digital.nsw.gov.au/delivery</a></p>
+
+                <p class="timestamp">Last Generated: {formatted_datetime}</p>
+            </div>
         </div>
         """
 
@@ -51,6 +66,10 @@ class PDFCompiler:
         """Compile all sections into single HTML document"""
         html_parts = []
 
+        # Get generation timestamp
+        generation_timestamp = datetime.now()
+        formatted_date = generation_timestamp.strftime('%d %B %Y')
+
         # HTML header
         html_parts.append("""
         <!DOCTYPE html>
@@ -62,8 +81,11 @@ class PDFCompiler:
         <body>
         """.format(metadata.get('title', 'Digital NSW Standards')))
 
+        # Generation info for footer (appears on every page)
+        html_parts.append(f'<div class="generation-info">Generated: {formatted_date} | Source: digital.nsw.gov.au/delivery</div>')
+
         # Title page
-        html_parts.append(self.create_title_page(metadata))
+        html_parts.append(self.create_title_page(metadata, generation_timestamp))
 
         # Table of contents
         html_parts.append(self.create_toc(sections))

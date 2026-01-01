@@ -6,11 +6,23 @@
         font-size: 9pt;
         color: #666;
     }
+    @bottom-left {
+        content: string(generation-info);
+        font-size: 8pt;
+        color: #999;
+    }
     @bottom-right {
         content: "Page " counter(page);
         font-size: 9pt;
         color: #666;
     }
+}
+
+/* Generation info for footer */
+.generation-info {
+    position: running(generation-info);
+    font-size: 8pt;
+    color: #999;
 }
 
 body {
@@ -24,7 +36,7 @@ body {
 .title-page {
     page-break-after: always;
     text-align: center;
-    padding-top: 30%;
+    padding-top: 20%;
 }
 
 .title-page h1 {
@@ -36,13 +48,52 @@ body {
 .title-page .subtitle {
     font-size: 18pt;
     color: #666;
-    margin-bottom: 3em;
+    margin-bottom: 2em;
 }
 
 .title-page .metadata {
     font-size: 12pt;
     color: #666;
     line-height: 1.8;
+    margin-bottom: 3em;
+}
+
+.title-page .important-notice {
+    background-color: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 1.5em;
+    margin: 2em auto;
+    max-width: 85%;
+    text-align: left;
+}
+
+.title-page .important-notice h2 {
+    color: #856404;
+    font-size: 14pt;
+    margin-top: 0;
+    margin-bottom: 0.8em;
+    text-align: center;
+    font-weight: bold;
+}
+
+.title-page .important-notice p {
+    font-size: 10pt;
+    color: #333;
+    line-height: 1.6;
+    margin-bottom: 0.8em;
+}
+
+.title-page .important-notice .website-link {
+    font-weight: bold;
+    color: #0085B3;
+}
+
+.title-page .important-notice .timestamp {
+    font-size: 9pt;
+    color: #666;
+    margin-top: 1em;
+    font-style: italic;
 }
 
 /* Table of Contents */

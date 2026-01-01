@@ -1,5 +1,6 @@
 # Scraping settings
-REQUEST_DELAY = 1.0  # Seconds between requests (be polite!)
+import os
+REQUEST_DELAY = float(os.getenv('REQUEST_DELAY', '1.0'))  # Seconds between requests (be polite!)
 MAX_RETRIES = 3
 TIMEOUT = 30  # Request timeout in seconds
 

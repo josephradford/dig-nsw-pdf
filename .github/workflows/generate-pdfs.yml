@@ -18,6 +18,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install system dependencies for WeasyPrint
         run: |
@@ -37,19 +38,14 @@ jobs:
           pip install -r requirements.txt
 
       - name: Generate PDFs
+        env:
+          REQUEST_DELAY: '0.5'  # Faster scraping for CI (still polite)
         run: |
-          python main.py --save-html
+          python main.py
 
       - name: Upload PDFs as artifacts
         uses: actions/upload-artifact@v4
         with:
           name: digital-nsw-pdfs
           path: output/*.pdf
-          retention-days: 90
-
-      - name: Upload HTML files as artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: digital-nsw-html
-          path: output/html/*.html
           retention-days: 90

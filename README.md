@@ -163,15 +163,22 @@ Each PDF includes ALL pages linked from the main section page, up to the configu
 
 ## GitHub Actions Automation
 
-The repository includes a GitHub Actions workflow that automatically regenerates PDFs when code is pushed to the main branch.
+The repository includes a GitHub Actions workflow that automatically generates PDFs when code is pushed to the main branch.
 
 **Workflow features:**
 - Triggers on push to main or manual dispatch
 - Installs all system dependencies for WeasyPrint
-- Generates all PDFs
-- Commits updated PDFs back to the repository
+- Generates all 7 PDFs
+- Uploads PDFs and HTML as GitHub Actions artifacts (retained for 90 days)
+
+**To download generated PDFs:**
+1. Go to the [Actions tab](https://github.com/josephradford/dig-nsw-pdf/actions) in the repository
+2. Click on the most recent workflow run
+3. Download the `digital-nsw-pdfs` artifact
 
 The workflow is defined in `.github/workflows/generate-pdfs.yml`.
+
+**Note:** PDFs are not committed to the repository to keep it lightweight. Generate them locally using `python main.py` or download from GitHub Actions artifacts.
 
 ## Troubleshooting
 

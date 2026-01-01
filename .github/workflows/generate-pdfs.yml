@@ -40,26 +40,16 @@ jobs:
         run: |
           python main.py --save-html
 
-      - name: Check for changes
-        id: check_changes
-        run: |
-          git diff --quiet output/ || echo "changed=true" >> $GITHUB_OUTPUT
-
-      - name: Commit generated PDFs
-        if: steps.check_changes.outputs.changed == 'true'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add output/*.pdf output/html/*.html
-          git commit -m "Auto-generate PDFs from Digital NSW content
-
-          🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-          Co-Authored-By: Claude <noreply@anthropic.com>"
-
-      - name: Push changes
-        if: steps.check_changes.outputs.changed == 'true'
-        uses: ad-m/github-push-action@master
+      - name: Upload PDFs as artifacts
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: main
+          name: digital-nsw-pdfs
+          path: output/*.pdf
+          retention-days: 90
+
+      - name: Upload HTML files as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: digital-nsw-html
+          path: output/html/*.html
+          retention-days: 90

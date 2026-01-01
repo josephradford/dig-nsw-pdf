@@ -16,8 +16,12 @@ ENV/
 *.swo
 *~
 
-# Output files - images only (PDFs and HTML are committed)
+# Output files
+output/*.pdf
+output/html/*.html
 output/images/*
+!output/.gitkeep
+!output/html/.gitkeep
 !output/images/.gitkeep
 
 # Logs

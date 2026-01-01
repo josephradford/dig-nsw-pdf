@@ -80,7 +80,7 @@ def process_section(section_config, scraper, settings, output_dir, save_html=Fal
     # Compile HTML
     print("\n[4/5] Compiling HTML document...")
     compiler = PDFCompiler(settings)
-    html_document = compiler.compile_html_document(
+    html_document, generation_timestamp = compiler.compile_html_document(
         [section_data],
         section_config.get('metadata', {'title': section_name})
     )
@@ -97,7 +97,7 @@ def process_section(section_config, scraper, settings, output_dir, save_html=Fal
     output_path = output_dir / output_filename
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    compiler.generate_pdf(html_document, str(output_path))
+    compiler.generate_pdf(html_document, str(output_path), generation_timestamp)
 
     print(f"✓ {section_name} complete!")
     print(f"  Output: {output_path.absolute()}")

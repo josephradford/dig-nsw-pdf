@@ -17,7 +17,7 @@ class PDFCompiler:
     def create_title_page(self, metadata, generation_timestamp):
         """Generate title page HTML with important notice"""
         formatted_date = generation_timestamp.strftime('%d %B %Y')
-        formatted_datetime = generation_timestamp.strftime('%d %B %Y at %H:%M %Z')
+        formatted_datetime = generation_timestamp.strftime('%d %B %Y at %H:%M UTC')
 
         return f"""
         <div class="title-page">
@@ -63,12 +63,15 @@ class PDFCompiler:
         return ''.join(toc_html)
 
     def compile_html_document(self, sections, metadata):
-        """Compile all sections into single HTML document"""
+        """Compile all sections into single HTML document
+
+        Returns:
+            tuple: (html_content, generation_timestamp)
+        """
         html_parts = []
 
-        # Get generation timestamp
-        generation_timestamp = datetime.now()
-        formatted_date = generation_timestamp.strftime('%d %B %Y')
+        # Get generation timestamp in UTC
+        generation_timestamp = datetime.utcnow()
 
         # HTML header
         html_parts.append("""
@@ -80,9 +83,6 @@ class PDFCompiler:
         </head>
         <body>
         """.format(metadata.get('title', 'Digital NSW Standards')))
-
-        # Generation info for footer (appears on every page)
-        html_parts.append(f'<div class="generation-info">Generated: {formatted_date} | Source: digital.nsw.gov.au/delivery</div>')
 
         # Title page
         html_parts.append(self.create_title_page(metadata, generation_timestamp))
@@ -107,13 +107,31 @@ class PDFCompiler:
         # HTML footer
         html_parts.append('</body></html>')
 
-        return ''.join(html_parts)
+        return ''.join(html_parts), generation_timestamp
 
-    def generate_pdf(self, html_content, output_path):
+    def generate_pdf(self, html_content, output_path, generation_timestamp=None):
         """Generate PDF from HTML content"""
         # Load CSS
         with open(self.css_path, 'r') as f:
             css_content = f.read()
+
+        # Inject generation timestamp into CSS if provided
+        if generation_timestamp:
+            # Format timestamp as UTC
+            formatted_datetime = generation_timestamp.strftime('%d %b %Y %H:%M UTC')
+            footer_text = f"Generated: {formatted_datetime} | Source: digital.nsw.gov.au/delivery"
+
+            # Add dynamic CSS for the footer
+            dynamic_css = f"""
+            @page {{
+                @bottom-left {{
+                    content: "{footer_text}";
+                    font-size: 8pt;
+                    color: #999;
+                }}
+            }}
+            """
+            css_content = css_content + dynamic_css
 
         # Create WeasyPrint objects
         html = HTML(string=html_content)

@@ -6,23 +6,12 @@
         font-size: 9pt;
         color: #666;
     }
-    @bottom-left {
-        content: string(generation-info);
-        font-size: 8pt;
-        color: #999;
-    }
     @bottom-right {
         content: "Page " counter(page);
         font-size: 9pt;
         color: #666;
     }
-}
-
-/* Generation info for footer */
-.generation-info {
-    position: running(generation-info);
-    font-size: 8pt;
-    color: #999;
+    /* @bottom-left is dynamically added by PDFCompiler with generation timestamp */
 }
 
 body {

@@ -68,6 +68,10 @@ class DigitalNSWScraper:
         for skip_link in main_content.find_all(class_=['skip-link', 'skip-to-content']):
             skip_link.decompose()
 
+        # Remove aria-hidden elements (decorative icons like Material Icons)
+        for hidden in main_content.find_all(attrs={'aria-hidden': 'true'}):
+            hidden.decompose()
+
         return main_content
 
     def extract_internal_links(self, soup, base_path):

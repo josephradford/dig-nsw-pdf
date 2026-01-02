@@ -7,30 +7,48 @@ from src.html_processor import HTMLProcessor
 
 def build_page_tree(pages):
     """
-    Build a hierarchical tree structure from flat list of pages
+    Build a hierarchical tree structure from flat list of pages based on URL hierarchy
 
     Args:
-        pages: List of page dictionaries with 'url', 'parent_url', and other fields
+        pages: List of page dictionaries with 'url' and other fields
 
     Returns:
         List of root pages with 'children' field populated recursively
     """
+    from urllib.parse import urlparse
+
     # Create a mapping of URL to page
     pages_by_url = {page['url']: {**page, 'children': []} for page in pages}
 
-    # Build the tree
-    root_pages = []
-
+    # Build parent-child relationships based on URL path hierarchy
+    # For each page, find its parent by removing the last path segment
     for page in pages:
         url = page['url']
-        parent_url = page.get('parent_url')
+        parsed = urlparse(url)
+        path_parts = [p for p in parsed.path.split('/') if p]
 
-        if parent_url is None or parent_url not in pages_by_url:
-            # This is a root page
-            root_pages.append(pages_by_url[url])
-        else:
-            # This is a child page
-            pages_by_url[parent_url]['children'].append(pages_by_url[url])
+        # Store the page reference
+        page_obj = pages_by_url[url]
+
+        # Try to find parent by progressively removing path segments
+        if len(path_parts) > 0:
+            # Try shorter paths to find parent
+            for i in range(len(path_parts) - 1, 0, -1):
+                parent_path = '/' + '/'.join(path_parts[:i])
+                parent_url = f"{parsed.scheme}://{parsed.netloc}{parent_path}"
+
+                if parent_url in pages_by_url and parent_url != url:
+                    # Found a parent that exists in our pages
+                    pages_by_url[parent_url]['children'].append(page_obj)
+                    break
+
+    # Collect root pages (pages that aren't children of any other page)
+    all_children = set()
+    for page in pages_by_url.values():
+        for child in page['children']:
+            all_children.add(child['url'])
+
+    root_pages = [p for p in pages_by_url.values() if p['url'] not in all_children]
 
     return root_pages
 
@@ -111,6 +129,58 @@ class PDFCompiler:
         html.append('</ul>')
         return ''.join(html)
 
+    def _normalize_content_headings(self, content):
+        """
+        Convert h1-h6 headings in page content to styled divs to prevent PDF bookmark conflicts
+
+        Args:
+            content: BeautifulSoup content object or string
+
+        Returns:
+            Modified content with headings converted to divs
+        """
+        from bs4 import BeautifulSoup
+
+        # Wrap content in a container soup if it's a tag
+        if hasattr(content, 'name'):  # It's a BeautifulSoup Tag
+            # Create a new soup and add the content to it
+            soup = BeautifulSoup('', 'html.parser')
+            container = soup.new_tag('div')
+            # Copy the content
+            for child in list(content.children):
+                container.append(child.extract())
+            soup.append(container)
+        elif isinstance(content, str):
+            soup = BeautifulSoup(content, 'html.parser')
+            container = soup
+        else:
+            # Already a soup object
+            soup = content
+            container = content
+
+        # Replace all headings with styled divs
+        for heading_level in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+            for heading in container.find_all(heading_level):
+                # Create a div with the same content
+                div = soup.new_tag('div')
+                div['class'] = heading.get('class', []) + [f'content-{heading_level}']
+
+                # Copy all children
+                for child in list(heading.children):
+                    div.append(child.extract())
+
+                # Copy id if present
+                if heading.get('id'):
+                    div['id'] = heading['id']
+
+                # Replace heading with div
+                heading.replace_with(div)
+
+        # Return just the container content if we created a wrapper
+        if hasattr(content, 'name'):
+            return container
+        return soup
+
     def _render_page_tree(self, pages, base_heading_level=2):
         """
         Recursively render pages with hierarchical structure
@@ -134,11 +204,12 @@ class PDFCompiler:
             # Start page div
             html_parts.append(f'<div class="page page-level-{base_heading_level - 2}" id="{page_slug}">')
 
-            # Add page heading
+            # Add page heading (this creates the PDF bookmark)
             html_parts.append(f'<h{heading_level} class="page-title">{page["title"]}</h{heading_level}>')
 
-            # Add page content
-            html_parts.append(str(page['content']))
+            # Normalize content headings to prevent bookmark conflicts
+            normalized_content = self._normalize_content_headings(page['content'])
+            html_parts.append(str(normalized_content))
 
             # Recursively render children
             if page.get('children'):

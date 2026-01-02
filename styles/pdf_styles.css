@@ -217,6 +217,52 @@ h4, h5, h6 {
     margin-bottom: 0.4em;
 }
 
+/* Content headings (converted from h1-h6 to divs to avoid bookmark conflicts) */
+.content-h1 {
+    color: #002664;
+    font-size: 20pt;
+    font-weight: bold;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    page-break-after: avoid;
+}
+
+.content-h2 {
+    color: #002664;
+    font-size: 16pt;
+    font-weight: bold;
+    margin-top: 1.2em;
+    margin-bottom: 0.4em;
+    page-break-after: avoid;
+}
+
+.content-h3 {
+    color: #002664;
+    font-size: 14pt;
+    font-weight: bold;
+    margin-top: 1em;
+    margin-bottom: 0.4em;
+    page-break-after: avoid;
+}
+
+.content-h4 {
+    color: #333;
+    font-size: 12pt;
+    font-weight: bold;
+    margin-top: 0.8em;
+    margin-bottom: 0.3em;
+    page-break-after: avoid;
+}
+
+.content-h5, .content-h6 {
+    color: #333;
+    font-size: 11pt;
+    font-weight: bold;
+    margin-top: 0.6em;
+    margin-bottom: 0.3em;
+    page-break-after: avoid;
+}
+
 /* Paragraphs */
 p {
     orphans: 3;

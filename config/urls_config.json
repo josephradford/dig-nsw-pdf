@@ -5,7 +5,7 @@
       "description": "Essential design and delivery standards for NSW government digital services",
       "base_path": "/delivery/digital-service-toolkit",
       "output_filename": "digital-service-toolkit.pdf",
-      "max_depth": 3,
+      "max_depth": 5,
       "metadata": {
         "title": "Digital NSW - Digital Service Toolkit",
         "author": "Compiled from Digital NSW",
@@ -24,7 +24,7 @@
       "description": "Shared platforms and services for government agencies",
       "base_path": "/delivery/government-technology-platforms",
       "output_filename": "government-technology-platforms.pdf",
-      "max_depth": 3,
+      "max_depth": 5,
       "metadata": {
         "title": "Digital NSW - Government Technology Platforms",
         "author": "Compiled from Digital NSW",
@@ -43,7 +43,7 @@
       "description": "Reusable digital assets and components",
       "base_path": "/delivery/state-digital-assets",
       "output_filename": "state-digital-assets.pdf",
-      "max_depth": 3,
+      "max_depth": 5,
       "metadata": {
         "title": "Digital NSW - State Digital Assets",
         "author": "Compiled from Digital NSW",
@@ -62,7 +62,7 @@
       "description": "Making services accessible to all users",
       "base_path": "/delivery/accessibility-and-inclusivity-toolkit",
       "output_filename": "accessibility-and-inclusivity-toolkit.pdf",
-      "max_depth": 3,
+      "max_depth": 5,
       "metadata": {
         "title": "Digital NSW - Accessibility and Inclusivity Toolkit",
         "author": "Compiled from Digital NSW",
@@ -81,7 +81,7 @@
       "description": "Security guidance and resources",
       "base_path": "/delivery/cyber-security",
       "output_filename": "cyber-security.pdf",
-      "max_depth": 3,
+      "max_depth": 5,
       "metadata": {
         "title": "Digital NSW - Cyber Security",
         "author": "Compiled from Digital NSW",
@@ -100,7 +100,7 @@
       "description": "Guidance on implementing automation in government services",
       "base_path": "/delivery/nsw-automation-guide",
       "output_filename": "nsw-automation-guide.pdf",
-      "max_depth": 3,
+      "max_depth": 5,
       "metadata": {
         "title": "Digital NSW - NSW Automation Guide",
         "author": "Compiled from Digital NSW",
@@ -119,7 +119,7 @@
       "description": "Innovation procurement framework",
       "base_path": "/delivery/test-and-buy-innovation",
       "output_filename": "test-and-buy-innovation.pdf",
-      "max_depth": 3,
+      "max_depth": 5,
       "metadata": {
         "title": "Digital NSW - Test and Buy Innovation",
         "author": "Compiled from Digital NSW",

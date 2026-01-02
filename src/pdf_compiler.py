@@ -5,6 +5,36 @@ from datetime import datetime
 from src.html_processor import HTMLProcessor
 
 
+def build_page_tree(pages):
+    """
+    Build a hierarchical tree structure from flat list of pages
+
+    Args:
+        pages: List of page dictionaries with 'url', 'parent_url', and other fields
+
+    Returns:
+        List of root pages with 'children' field populated recursively
+    """
+    # Create a mapping of URL to page
+    pages_by_url = {page['url']: {**page, 'children': []} for page in pages}
+
+    # Build the tree
+    root_pages = []
+
+    for page in pages:
+        url = page['url']
+        parent_url = page.get('parent_url')
+
+        if parent_url is None or parent_url not in pages_by_url:
+            # This is a root page
+            root_pages.append(pages_by_url[url])
+        else:
+            # This is a child page
+            pages_by_url[parent_url]['children'].append(pages_by_url[url])
+
+    return root_pages
+
+
 class PDFCompiler:
     """
     Compile scraped HTML content into a single PDF
@@ -44,23 +74,81 @@ class PDFCompiler:
         """
 
     def create_toc(self, sections):
-        """Generate table of contents"""
+        """Generate table of contents with hierarchical structure"""
         toc_html = ['<div class="toc"><h1 id="table-of-contents">Table of Contents</h1><ul>']
 
         for section in sections:
             section_slug = HTMLProcessor.slugify(section['section_name'])
             toc_html.append(f'<li class="toc-section">')
             toc_html.append(f'<a href="#{section_slug}">{section["section_name"]}</a>')
-            toc_html.append('<ul>')
 
-            for page in section['pages']:
-                page_slug = HTMLProcessor.slugify(page['title'])
-                toc_html.append(f'<li><a href="#{page_slug}">{page["title"]}</a></li>')
+            # Render hierarchical page structure
+            if section.get('page_tree'):
+                toc_html.append(self._render_toc_tree(section['page_tree']))
 
-            toc_html.append('</ul></li>')
+            toc_html.append('</li>')
 
         toc_html.append('</ul></div>')
         return ''.join(toc_html)
+
+    def _render_toc_tree(self, pages, level=0):
+        """Recursively render TOC tree structure"""
+        if not pages:
+            return ''
+
+        html = ['<ul>']
+        for page in pages:
+            page_slug = HTMLProcessor.slugify(page['title'])
+            indent_class = f'toc-level-{level}' if level > 0 else ''
+            html.append(f'<li class="{indent_class}">')
+            html.append(f'<a href="#{page_slug}">{page["title"]}</a>')
+
+            # Recursively render children
+            if page.get('children'):
+                html.append(self._render_toc_tree(page['children'], level + 1))
+
+            html.append('</li>')
+        html.append('</ul>')
+        return ''.join(html)
+
+    def _render_page_tree(self, pages, base_heading_level=2):
+        """
+        Recursively render pages with hierarchical structure
+
+        Args:
+            pages: List of page dictionaries with 'children' field
+            base_heading_level: Starting heading level (2 = h2, 3 = h3, etc.)
+
+        Returns:
+            HTML string with hierarchical page structure
+        """
+        if not pages:
+            return ''
+
+        html_parts = []
+
+        for page in pages:
+            page_slug = HTMLProcessor.slugify(page['title'])
+            heading_level = min(base_heading_level, 6)  # HTML only goes to h6
+
+            # Start page div
+            html_parts.append(f'<div class="page page-level-{base_heading_level - 2}" id="{page_slug}">')
+
+            # Add page heading
+            html_parts.append(f'<h{heading_level} class="page-title">{page["title"]}</h{heading_level}>')
+
+            # Add page content
+            html_parts.append(str(page['content']))
+
+            # Recursively render children
+            if page.get('children'):
+                html_parts.append('<div class="page-children">')
+                html_parts.append(self._render_page_tree(page['children'], base_heading_level + 1))
+                html_parts.append('</div>')
+
+            html_parts.append('</div>')
+
+        return ''.join(html_parts)
 
     def compile_html_document(self, sections, metadata):
         """Compile all sections into single HTML document
@@ -87,6 +175,10 @@ class PDFCompiler:
         # Title page
         html_parts.append(self.create_title_page(metadata, generation_timestamp))
 
+        # Build tree structure for each section
+        for section in sections:
+            section['page_tree'] = build_page_tree(section['pages'])
+
         # Table of contents
         html_parts.append(self.create_toc(sections))
 
@@ -96,11 +188,8 @@ class PDFCompiler:
             html_parts.append(f'<div class="section" id="{section_slug}">')
             html_parts.append(f'<h1 class="section-title">{section["section_name"]}</h1>')
 
-            for page in section['pages']:
-                page_slug = HTMLProcessor.slugify(page['title'])
-                html_parts.append(f'<div class="page" id="{page_slug}">')
-                html_parts.append(str(page['content']))
-                html_parts.append('</div>')
+            # Render hierarchical page structure
+            html_parts.append(self._render_page_tree(section['page_tree'], base_heading_level=2))
 
             html_parts.append('</div>')
 

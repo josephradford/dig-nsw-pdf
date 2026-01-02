@@ -102,7 +102,7 @@ class DigitalNSWScraper:
 
         return internal_links
 
-    def scrape_page_recursive(self, url, base_path, depth=0, max_depth=3):
+    def scrape_page_recursive(self, url, base_path, depth=0, max_depth=3, parent_url=None):
         """
         Recursively scrape a page and its internal links
 
@@ -111,9 +111,10 @@ class DigitalNSWScraper:
             base_path: Base path for this section (e.g., '/delivery/digital-service-toolkit')
             depth: Current recursion depth
             max_depth: Maximum recursion depth
+            parent_url: URL of the parent page (None for root pages)
 
         Returns:
-            List of page dictionaries with title, url, and content
+            List of page dictionaries with title, url, content, and parent_url
         """
         # Check if already visited
         if url in self.visited_urls:
@@ -149,7 +150,8 @@ class DigitalNSWScraper:
             'title': title,
             'url': url,
             'content': content,
-            'order': depth
+            'order': depth,
+            'parent_url': parent_url
         }]
 
         # Extract and follow internal links
@@ -159,7 +161,7 @@ class DigitalNSWScraper:
             for link_url in internal_links:
                 if link_url not in self.visited_urls:
                     logger.info(f"Following internal link: {link_url} (depth {depth + 1})")
-                    child_pages = self.scrape_page_recursive(link_url, base_path, depth + 1, max_depth)
+                    child_pages = self.scrape_page_recursive(link_url, base_path, depth + 1, max_depth, parent_url=url)
                     pages.extend(child_pages)
 
         return pages

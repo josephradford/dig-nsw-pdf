@@ -126,6 +126,24 @@ body {
     text-decoration: underline;
 }
 
+/* TOC hierarchy levels */
+.toc ul ul {
+    padding-left: 1.5em;
+}
+
+.toc-level-1 a {
+    font-size: 11pt;
+}
+
+.toc-level-2 a {
+    font-size: 10pt;
+}
+
+.toc-level-3 a, .toc-level-4 a {
+    font-size: 9pt;
+    color: #555;
+}
+
 /* Headings */
 h1 {
     page-break-before: always;
@@ -142,6 +160,40 @@ h1 {
     padding-bottom: 0.3em;
 }
 
+/* Page title headings at different hierarchy levels */
+h2.page-title {
+    color: #002664;
+    font-size: 18pt;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    page-break-after: avoid;
+}
+
+h3.page-title {
+    color: #002664;
+    font-size: 16pt;
+    margin-top: 1.2em;
+    margin-bottom: 0.4em;
+    page-break-after: avoid;
+}
+
+h4.page-title {
+    color: #002664;
+    font-size: 14pt;
+    margin-top: 1em;
+    margin-bottom: 0.4em;
+    page-break-after: avoid;
+}
+
+h5.page-title, h6.page-title {
+    color: #333;
+    font-size: 12pt;
+    margin-top: 0.8em;
+    margin-bottom: 0.3em;
+    page-break-after: avoid;
+}
+
+/* Standard headings (within page content) */
 h2 {
     color: #002664;
     font-size: 18pt;
@@ -282,6 +334,31 @@ hr {
 
 .page {
     margin-bottom: 2em;
+}
+
+/* Hierarchical page structure */
+.page-children {
+    margin-left: 0;
+    margin-top: 1em;
+}
+
+.page-level-0 {
+    /* Root level pages */
+}
+
+.page-level-1 {
+    /* Second level pages */
+    margin-left: 0;
+}
+
+.page-level-2 {
+    /* Third level pages */
+    margin-left: 0;
+}
+
+.page-level-3, .page-level-4 {
+    /* Deep nested pages */
+    margin-left: 0;
 }
 
 /* Prevent widows and orphans */

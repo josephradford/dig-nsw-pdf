@@ -45,20 +45,20 @@ class PDFCompiler:
         self.css_path = css_path or config.CUSTOM_CSS_PATH
 
     def create_title_page(self, metadata, generation_timestamp):
-        """Generate title page HTML with important notice"""
+        """Generate title page HTML with important notice (no heading elements for bookmarks)"""
         formatted_date = generation_timestamp.strftime('%d %B %Y')
         formatted_datetime = generation_timestamp.strftime('%d %B %Y at %H:%M UTC')
 
         return f"""
         <div class="title-page">
-            <h1>{metadata.get('title', 'Digital NSW Standards')}</h1>
+            <p class="title-page-heading">{metadata.get('title', 'Digital NSW Standards')}</p>
             <p class="subtitle">Reference Guide for Government Digital Roles</p>
             <p class="metadata">
                 {metadata.get('author', '')}
             </p>
 
             <div class="important-notice">
-                <h2>IMPORTANT NOTICE</h2>
+                <p class="important-notice-heading">IMPORTANT NOTICE</p>
                 <p>This document was automatically generated on <strong>{formatted_date}</strong> from
                 content published at <a href="https://www.digital.nsw.gov.au/delivery" class="website-link">https://www.digital.nsw.gov.au/delivery</a>.</p>
 
@@ -74,8 +74,8 @@ class PDFCompiler:
         """
 
     def create_toc(self, sections):
-        """Generate table of contents with hierarchical structure"""
-        toc_html = ['<div class="toc"><h1 id="table-of-contents">Table of Contents</h1><ul>']
+        """Generate table of contents with hierarchical structure (no h1 for bookmarks)"""
+        toc_html = ['<div class="toc"><p class="toc-heading" id="table-of-contents">Table of Contents</p><ul>']
 
         for section in sections:
             section_slug = HTMLProcessor.slugify(section['section_name'])

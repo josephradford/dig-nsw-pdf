@@ -28,10 +28,11 @@ body {
     padding-top: 20%;
 }
 
-.title-page h1 {
+.title-page-heading {
     font-size: 36pt;
     color: #002664;
     margin-bottom: 0.5em;
+    font-weight: bold;
 }
 
 .title-page .subtitle {
@@ -57,7 +58,7 @@ body {
     text-align: left;
 }
 
-.title-page .important-notice h2 {
+.important-notice-heading {
     color: #856404;
     font-size: 14pt;
     margin-top: 0;
@@ -90,10 +91,11 @@ body {
     page-break-after: always;
 }
 
-.toc h1 {
+.toc-heading {
     color: #002664;
     font-size: 24pt;
     margin-bottom: 1em;
+    font-weight: bold;
 }
 
 .toc ul {

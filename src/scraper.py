@@ -29,6 +29,7 @@ class DigitalNSWScraper:
         self.config = config
         self.pages_cache = {}
         self.visited_urls = set()
+        self.direct_children_map = {}  # Store parent_url -> [ordered list of child URLs]
 
     def fetch_page(self, url, retry_count=0):
         """Fetch a single page with retry logic"""
@@ -87,10 +88,16 @@ class DigitalNSWScraper:
 
     def extract_internal_links(self, soup, base_path):
         """
-        Extract internal links from page that are within the same section
+        Extract internal links from page that are within the same section,
+        preserving the order they appear in the HTML (visual order)
+
         base_path: e.g., '/delivery/digital-service-toolkit'
+
+        Returns:
+            List of URLs in order of appearance (duplicates removed)
         """
-        internal_links = set()
+        internal_links = []
+        seen_links = set()
 
         for link in soup.find_all('a', href=True):
             href = link['href']
@@ -109,11 +116,15 @@ class DigitalNSWScraper:
 
                 # Remove fragment and query
                 clean_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
-                internal_links.add(clean_url)
+
+                # Add only if not seen before (preserve first occurrence order)
+                if clean_url not in seen_links:
+                    internal_links.append(clean_url)
+                    seen_links.add(clean_url)
 
         return internal_links
 
-    def scrape_page_recursive(self, url, base_path, depth=0, max_depth=3, parent_url=None):
+    def scrape_page_recursive(self, url, base_path, depth=0, max_depth=3, parent_url=None, display_order=0):
         """
         Recursively scrape a page and its internal links
 
@@ -123,9 +134,10 @@ class DigitalNSWScraper:
             depth: Current recursion depth
             max_depth: Maximum recursion depth
             parent_url: URL of the parent page (None for root pages)
+            display_order: Order this page appears in its parent (for sorting)
 
         Returns:
-            List of page dictionaries with title, url, content, and parent_url
+            List of page dictionaries with title, url, content, parent_url, and display_order
         """
         # Check if already visited
         if url in self.visited_urls:
@@ -162,17 +174,36 @@ class DigitalNSWScraper:
             'url': url,
             'content': content,
             'order': depth,
-            'parent_url': parent_url
+            'parent_url': parent_url,
+            'display_order': display_order
         }]
 
         # Extract and follow internal links
         if depth < max_depth:
             internal_links = self.extract_internal_links(soup, base_path)
 
+            # Filter to direct children only (one level deeper) for display ordering
+            parsed_current = urlparse(url)
+            current_depth = parsed_current.path.count('/')
+
+            direct_children = []
+            for link in internal_links:
+                parsed_link = urlparse(link)
+                link_depth = parsed_link.path.count('/')
+                if link_depth == current_depth + 1:
+                    direct_children.append(link)
+
+            # Store direct children for this parent (for tree building later)
+            self.direct_children_map[url] = direct_children
+
             for link_url in internal_links:
                 if link_url not in self.visited_urls:
                     logger.info(f"Following internal link: {link_url} (depth {depth + 1})")
-                    child_pages = self.scrape_page_recursive(link_url, base_path, depth + 1, max_depth, parent_url=url)
+                    child_pages = self.scrape_page_recursive(
+                        link_url, base_path, depth + 1, max_depth,
+                        parent_url=url,
+                        display_order=0  # Will be set correctly in build_page_tree
+                    )
                     pages.extend(child_pages)
 
         return pages
@@ -190,8 +221,9 @@ class DigitalNSWScraper:
             # Get base path for this section
             base_path = section.get('base_path', '/delivery')
 
-            # Reset visited URLs for each section
+            # Reset visited URLs and direct children map for each section
             self.visited_urls = set()
+            self.direct_children_map = {}
 
             for page in section['pages']:
                 # Use recursive scraping
@@ -202,6 +234,9 @@ class DigitalNSWScraper:
                     max_depth=section.get('max_depth', 3)
                 )
                 section_results['pages'].extend(scraped_pages)
+
+            # Include the direct children map for ordering
+            section_results['direct_children_map'] = self.direct_children_map
 
             results.append(section_results)
 

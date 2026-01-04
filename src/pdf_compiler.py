@@ -5,17 +5,21 @@ from datetime import datetime
 from src.html_processor import HTMLProcessor
 
 
-def build_page_tree(pages):
+def build_page_tree(pages, direct_children_map=None):
     """
     Build a hierarchical tree structure from flat list of pages based on URL hierarchy
 
     Args:
         pages: List of page dictionaries with 'url' and other fields
+        direct_children_map: Dict mapping parent URL to ordered list of direct child URLs
 
     Returns:
         List of root pages with 'children' field populated recursively
     """
     from urllib.parse import urlparse
+
+    if direct_children_map is None:
+        direct_children_map = {}
 
     # Create a mapping of URL to page
     pages_by_url = {page['url']: {**page, 'children': []} for page in pages}
@@ -49,6 +53,29 @@ def build_page_tree(pages):
             all_children.add(child['url'])
 
     root_pages = [p for p in pages_by_url.values() if p['url'] not in all_children]
+
+    # Assign display_order based on direct_children_map (visual order from website)
+    for parent_url, child_urls in direct_children_map.items():
+        if parent_url in pages_by_url:
+            parent_page = pages_by_url[parent_url]
+            # Create mapping of child URL to display order
+            child_order_map = {url: idx for idx, url in enumerate(child_urls)}
+            # Assign display_order to each child
+            for child in parent_page.get('children', []):
+                child['display_order'] = child_order_map.get(child['url'], 999)
+
+    # Sort children by display_order (preserves visual order from website)
+    def sort_children_recursive(page):
+        """Recursively sort children by display_order"""
+        if page.get('children'):
+            page['children'].sort(key=lambda p: p.get('display_order', 999))
+            for child in page['children']:
+                sort_children_recursive(child)
+
+    # Sort root pages and all descendants
+    root_pages.sort(key=lambda p: p.get('display_order', 999))
+    for page in root_pages:
+        sort_children_recursive(page)
 
     return root_pages
 
@@ -259,7 +286,8 @@ class PDFCompiler:
 
         # Build tree structure for each section
         for section in sections:
-            section['page_tree'] = build_page_tree(section['pages'])
+            direct_children_map = section.get('direct_children_map', {})
+            section['page_tree'] = build_page_tree(section['pages'], direct_children_map)
 
         # Table of contents
         html_parts.append(self.create_toc(sections))
@@ -268,10 +296,9 @@ class PDFCompiler:
         for section in sections:
             section_slug = HTMLProcessor.slugify(section['section_name'])
             html_parts.append(f'<div class="section" id="{section_slug}">')
-            html_parts.append(f'<h1 class="section-title">{section["section_name"]}</h1>')
 
-            # Render hierarchical page structure
-            html_parts.append(self._render_page_tree(section['page_tree'], base_heading_level=2))
+            # Render hierarchical page structure (no section heading - already in PDF title)
+            html_parts.append(self._render_page_tree(section['page_tree'], base_heading_level=1))
 
             html_parts.append('</div>')
 

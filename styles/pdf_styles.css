@@ -163,6 +163,16 @@ h1 {
 }
 
 /* Page title headings at different hierarchy levels */
+h1.page-title {
+    color: #002664;
+    font-size: 24pt;
+    margin-top: 1.5em;
+    margin-bottom: 0.8em;
+    page-break-after: avoid;
+    border-bottom: 3px solid #0085B3;
+    padding-bottom: 0.3em;
+}
+
 h2.page-title {
     color: #002664;
     font-size: 18pt;

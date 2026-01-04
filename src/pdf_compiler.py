@@ -129,12 +129,14 @@ class PDFCompiler:
         html.append('</ul>')
         return ''.join(html)
 
-    def _normalize_content_headings(self, content):
+    def _normalize_content_headings(self, content, page_title=None):
         """
         Convert h1-h6 headings in page content to styled divs to prevent PDF bookmark conflicts
+        Also removes duplicate first heading if it matches the page title
 
         Args:
             content: BeautifulSoup content object or string
+            page_title: The page title (to detect and remove duplicates)
 
         Returns:
             Modified content with headings converted to divs
@@ -157,6 +159,14 @@ class PDFCompiler:
             # Already a soup object
             soup = content
             container = content
+
+        # Remove first h1 if it duplicates the page title
+        if page_title:
+            first_h1 = container.find('h1')
+            if first_h1:
+                first_h1_text = first_h1.get_text(strip=True)
+                if first_h1_text == page_title:
+                    first_h1.decompose()
 
         # Replace all headings with styled divs
         for heading_level in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
@@ -208,7 +218,8 @@ class PDFCompiler:
             html_parts.append(f'<h{heading_level} class="page-title">{page["title"]}</h{heading_level}>')
 
             # Normalize content headings to prevent bookmark conflicts
-            normalized_content = self._normalize_content_headings(page['content'])
+            # Pass page title to remove duplicate first heading
+            normalized_content = self._normalize_content_headings(page['content'], page_title=page['title'])
             html_parts.append(str(normalized_content))
 
             # Recursively render children

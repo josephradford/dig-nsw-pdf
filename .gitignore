@@ -27,6 +27,9 @@ output/images/*
 # Logs
 *.log
 
+# Cache
+nsw_digital_cache.sqlite
+
 # OS
 .DS_Store
 Thumbs.db

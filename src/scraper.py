@@ -1,4 +1,5 @@
 import requests
+import requests_cache
 from bs4 import BeautifulSoup
 import time
 import logging
@@ -15,7 +16,13 @@ class DigitalNSWScraper:
 
     def __init__(self, config):
         self.base_url = "https://www.digital.nsw.gov.au"
-        self.session = requests.Session()
+
+        # Use cached session to avoid repeated scraping during development
+        self.session = requests_cache.CachedSession(
+            'nsw_digital_cache',
+            backend='sqlite',
+            expire_after=86400  # 24 hours
+        )
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (compatible; DigitalNSW-PDF-Compiler/1.0)'
         })
@@ -30,8 +37,12 @@ class DigitalNSWScraper:
             response = self.session.get(url, timeout=self.config.TIMEOUT)
             response.raise_for_status()
 
-            # Be polite - delay between requests
-            time.sleep(self.config.REQUEST_DELAY)
+            # Be polite - delay between requests (but not for cached responses)
+            if not getattr(response, 'from_cache', False):
+                logger.info(f"  → Fresh fetch from server")
+                time.sleep(self.config.REQUEST_DELAY)
+            else:
+                logger.info(f"  → Loaded from cache")
 
             return response.text
 

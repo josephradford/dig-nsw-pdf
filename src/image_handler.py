@@ -2,8 +2,6 @@ import requests
 import base64
 import logging
 from urllib.parse import urljoin
-from pathlib import Path
-import mimetypes
 
 logger = logging.getLogger(__name__)
 

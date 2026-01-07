@@ -27,7 +27,6 @@ class DigitalNSWScraper:
             'User-Agent': 'Mozilla/5.0 (compatible; DigitalNSW-PDF-Compiler/1.0)'
         })
         self.config = config
-        self.pages_cache = {}
         self.visited_urls = set()
         self.direct_children_map = {}  # Store parent_url -> [ordered list of child URLs]
 
@@ -173,7 +172,6 @@ class DigitalNSWScraper:
             'title': title,
             'url': url,
             'content': content,
-            'order': depth,
             'parent_url': parent_url,
             'display_order': display_order
         }]

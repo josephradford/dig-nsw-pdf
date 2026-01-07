@@ -205,28 +205,6 @@ h5.page-title, h6.page-title {
     page-break-after: avoid;
 }
 
-/* Standard headings (within page content) */
-h2 {
-    color: #002664;
-    font-size: 18pt;
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
-}
-
-h3 {
-    color: #002664;
-    font-size: 14pt;
-    margin-top: 1em;
-    margin-bottom: 0.5em;
-}
-
-h4, h5, h6 {
-    color: #333;
-    font-size: 12pt;
-    margin-top: 0.8em;
-    margin-bottom: 0.4em;
-}
-
 /* Content headings (converted from h1-h6 to divs to avoid bookmark conflicts) */
 /* These are always smaller than their container page-title to show hierarchy */
 .content-h1 {

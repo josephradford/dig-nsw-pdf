@@ -308,10 +308,15 @@ def main():
     if args.section:
         if process_documents:
             # Filter documents that contain the specified section
-            url_config['documents'] = [
-                doc for doc in url_config.get('documents', [])
-                if args.section in [s['section_name'] for s in doc['sections']]
-            ]
+            filtered_docs = []
+            for doc in url_config.get('documents', []):
+                matching_sections = [s for s in doc['sections'] if s['section_name'] == args.section]
+                if matching_sections:
+                    # Create a copy of the document with only the matching section
+                    filtered_doc = doc.copy()
+                    filtered_doc['sections'] = matching_sections
+                    filtered_docs.append(filtered_doc)
+            url_config['documents'] = filtered_docs
         if process_sections:
             # Filter standalone sections
             url_config['sections'] = [

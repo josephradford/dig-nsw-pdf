@@ -8,12 +8,23 @@ import json
 import argparse
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 from src.scraper import DigitalNSWScraper
 from src.html_processor import HTMLProcessor
 from src.image_handler import ImageHandler
 from src.pdf_compiler import PDFCompiler
 from config import settings
+
+
+def has_documents(config):
+    """Check if config contains multi-section documents"""
+    return 'documents' in config and len(config['documents']) > 0
+
+
+def has_sections(config):
+    """Check if config contains standalone sections"""
+    return 'sections' in config and len(config['sections']) > 0
 
 
 def load_url_config(config_path):
@@ -40,6 +51,15 @@ def process_section(section_config, scraper, settings, output_dir, save_html=Fal
     print(f"Processing: {section_name}")
     print(f"{'=' * 60}")
 
+    # Get base URL for this section - either from config or extract from first page URL
+    if 'base_url' in section_config:
+        base_url = section_config['base_url']
+    else:
+        # Extract base URL from the first page URL
+        first_page_url = section_config['pages'][0]['url']
+        parsed = urlparse(first_page_url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+
     # Scrape pages
     print("\n[1/5] Scraping web pages...")
     scraped_content = scraper.scrape_url_list({'sections': [section_config]})
@@ -55,12 +75,23 @@ def process_section(section_config, scraper, settings, output_dir, save_html=Fal
     # Create URL map for internal linking
     print("\n[2/5] Processing HTML content...")
     url_map = create_url_map(section_data['pages'])
-    processor = HTMLProcessor(scraper.base_url, url_map)
+    processor = HTMLProcessor(base_url, url_map)
 
     # Process all pages
     for page in section_data['pages']:
+        if page['content'] is None:
+            print(f"  ⚠ Skipping page with no content: {page['title']}")
+            continue
         section_id = HTMLProcessor.slugify(page['title'])
-        page['content'] = processor.process_page(page['content'], section_id)
+        try:
+            page['content'] = processor.process_page(page['content'], section_id)
+        except Exception as e:
+            print(f"  ✗ Error processing page '{page['title']}' ({page['url']}): {e}")
+            print(f"     Content type: {type(page['content'])}")
+            raise
+
+    # Filter out pages with None content
+    section_data['pages'] = [p for p in section_data['pages'] if p['content'] is not None]
 
     print(f"  Processed {len(url_map)} pages")
 

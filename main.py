@@ -210,13 +210,15 @@ def process_document(document_config, scraper, settings, output_dir, save_html=F
             try:
                 page['content'] = processor.process_page(page['content'], section_id)
             except Exception as e:
-                print(f"  ✗ Error processing page '{page['title']}': {e}")
+                print(f"  ✗ Error processing page '{page['title']}' ({page['url']}): {e}")
+                print(f"     Content type: {type(page['content'])}")
                 raise
 
         # Filter out None content
         section_data['pages'] = [p for p in section_data['pages'] if p['content'] is not None]
 
-    print(f"  Processed {len(url_map)} total pages")
+    total_pages = sum(len(sd['pages']) for sd, _ in all_section_data)
+    print(f"  Processed {total_pages} total pages across {len(all_section_data)} sections")
 
     # Process images if enabled
     if settings.DOWNLOAD_IMAGES:
@@ -229,6 +231,8 @@ def process_document(document_config, scraper, settings, output_dir, save_html=F
                     output_dir / 'images'
                 )
         print("  Images processed")
+    else:
+        print("\nSkipping image processing")
 
     # Compile into single HTML document
     print("\nCompiling HTML document...")

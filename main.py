@@ -136,6 +136,132 @@ def process_section(section_config, scraper, settings, output_dir, save_html=Fal
     return output_path
 
 
+def process_document(document_config, scraper, settings, output_dir, save_html=False):
+    """Process a multi-section document and generate a single PDF
+
+    Args:
+        document_config: Document configuration with 'sections' list
+        scraper: DigitalNSWScraper instance
+        settings: Application settings
+        output_dir: Path to output directory
+        save_html: Whether to save intermediate HTML
+
+    Returns:
+        Path to generated PDF or None if failed
+    """
+    document_name = document_config['document_name']
+    output_filename = document_config.get('output_filename', f"{HTMLProcessor.slugify(document_name)}.pdf")
+
+    print(f"\n{'=' * 60}")
+    print(f"Processing Document: {document_name}")
+    print(f"  Contains {len(document_config['sections'])} sections")
+    print(f"{'=' * 60}")
+
+    # Scrape all sections
+    all_section_data = []
+    all_pages = []
+
+    for i, section_config in enumerate(document_config['sections'], 1):
+        section_name = section_config['section_name']
+        print(f"\n[Section {i}/{len(document_config['sections'])}] {section_name}")
+
+        # Get base URL
+        if 'base_url' in section_config:
+            base_url = section_config['base_url']
+        else:
+            first_page_url = section_config['pages'][0]['url']
+            parsed = urlparse(first_page_url)
+            base_url = f"{parsed.scheme}://{parsed.netloc}"
+
+        # Scrape this section
+        print("  Scraping web pages...")
+        scraped_content = scraper.scrape_url_list({'sections': [section_config]})
+
+        if not scraped_content or not scraped_content[0]['pages']:
+            print(f"  ⚠ No pages found for {section_name}")
+            continue
+
+        section_data = scraped_content[0]
+        page_count = len(section_data['pages'])
+        print(f"  Scraped {page_count} pages")
+
+        # Collect all pages for URL mapping
+        all_pages.extend(section_data['pages'])
+        all_section_data.append((section_data, base_url))
+
+    if not all_section_data:
+        print(f"  ⚠ No content found for document {document_name}")
+        return None
+
+    # Create unified URL map for all sections
+    print(f"\nProcessing HTML content for all sections...")
+    url_map = create_url_map(all_pages)
+
+    # Process each section's pages
+    for section_data, base_url in all_section_data:
+        processor = HTMLProcessor(base_url, url_map)
+
+        for page in section_data['pages']:
+            if page['content'] is None:
+                print(f"  ⚠ Skipping page with no content: {page['title']}")
+                continue
+
+            section_id = HTMLProcessor.slugify(page['title'])
+            try:
+                page['content'] = processor.process_page(page['content'], section_id)
+            except Exception as e:
+                print(f"  ✗ Error processing page '{page['title']}': {e}")
+                raise
+
+        # Filter out None content
+        section_data['pages'] = [p for p in section_data['pages'] if p['content'] is not None]
+
+    print(f"  Processed {len(url_map)} total pages")
+
+    # Process images if enabled
+    if settings.DOWNLOAD_IMAGES:
+        print("\nProcessing images...")
+        image_handler = ImageHandler(settings)
+        for section_data, _ in all_section_data:
+            for page in section_data['pages']:
+                page['content'] = image_handler.process_images(
+                    page['content'],
+                    output_dir / 'images'
+                )
+        print("  Images processed")
+
+    # Compile into single HTML document
+    print("\nCompiling HTML document...")
+    compiler = PDFCompiler(settings)
+
+    # Extract just the section_data objects
+    sections_list = [section_data for section_data, _ in all_section_data]
+
+    html_document, generation_timestamp = compiler.compile_html_document(
+        sections_list,
+        document_config.get('metadata', {'title': document_name})
+    )
+
+    if save_html:
+        html_path = output_dir / 'html' / output_filename.replace('.pdf', '.html')
+        html_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(html_document)
+        print(f"  HTML saved to: {html_path}")
+
+    # Generate PDF
+    print("\nGenerating PDF...")
+    output_path = output_dir / output_filename
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    compiler.generate_pdf(html_document, str(output_path), generation_timestamp)
+
+    print(f"✓ {document_name} complete!")
+    print(f"  Output: {output_path.absolute()}")
+
+    return output_path
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Compile Digital NSW standards into separate PDF documents'

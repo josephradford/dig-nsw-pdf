@@ -299,39 +299,76 @@ def main():
     # Load configuration
     print("\nLoading configuration...")
     url_config = load_url_config(args.config)
-    sections = url_config['sections']
 
-    # Filter sections if specific section requested
+    # Determine what to process
+    process_documents = has_documents(url_config)
+    process_sections = has_sections(url_config)
+
+    # Filter by --section argument if provided
     if args.section:
-        sections = [s for s in sections if s['section_name'] == args.section]
-        if not sections:
+        if process_documents:
+            # Filter documents that contain the specified section
+            url_config['documents'] = [
+                doc for doc in url_config.get('documents', [])
+                if args.section in [s['section_name'] for s in doc['sections']]
+            ]
+        if process_sections:
+            # Filter standalone sections
+            url_config['sections'] = [
+                s for s in url_config.get('sections', [])
+                if s['section_name'] == args.section
+            ]
+
+        if (not url_config.get('documents') and not url_config.get('sections')):
             print(f"Error: Section '{args.section}' not found in configuration")
             sys.exit(1)
 
-    print(f"  Loaded {len(sections)} section(s) to process")
+    total_items = len(url_config.get('documents', [])) + len(url_config.get('sections', []))
+    print(f"  Loaded {total_items} item(s) to process")
 
     # Initialize scraper
     scraper = DigitalNSWScraper(settings)
     output_dir = Path(args.output_dir)
 
-    # Process each section separately
     generated_pdfs = []
-    for i, section_config in enumerate(sections, 1):
-        print(f"\n\nSection {i}/{len(sections)}")
-        try:
-            pdf_path = process_section(
-                section_config,
-                scraper,
-                settings,
-                output_dir,
-                args.save_html
-            )
-            if pdf_path:
-                generated_pdfs.append(pdf_path)
-        except Exception as e:
-            print(f"  ✗ Error processing {section_config['section_name']}: {e}")
-            import traceback
-            traceback.print_exc()
+
+    # Process multi-section documents
+    if process_documents:
+        for i, document_config in enumerate(url_config['documents'], 1):
+            print(f"\n\nDocument {i}/{len(url_config['documents'])}")
+            try:
+                pdf_path = process_document(
+                    document_config,
+                    scraper,
+                    settings,
+                    output_dir,
+                    args.save_html
+                )
+                if pdf_path:
+                    generated_pdfs.append(pdf_path)
+            except Exception as e:
+                print(f"  ✗ Error processing {document_config['document_name']}: {e}")
+                import traceback
+                traceback.print_exc()
+
+    # Process standalone sections
+    if process_sections:
+        for i, section_config in enumerate(url_config['sections'], 1):
+            print(f"\n\nSection {i}/{len(url_config['sections'])}")
+            try:
+                pdf_path = process_section(
+                    section_config,
+                    scraper,
+                    settings,
+                    output_dir,
+                    args.save_html
+                )
+                if pdf_path:
+                    generated_pdfs.append(pdf_path)
+            except Exception as e:
+                print(f"  ✗ Error processing {section_config['section_name']}: {e}")
+                import traceback
+                traceback.print_exc()
 
     # Summary
     print("\n\n" + "=" * 60)

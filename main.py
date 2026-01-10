@@ -8,12 +8,23 @@ import json
 import argparse
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 from src.scraper import DigitalNSWScraper
 from src.html_processor import HTMLProcessor
 from src.image_handler import ImageHandler
 from src.pdf_compiler import PDFCompiler
 from config import settings
+
+
+def has_documents(config):
+    """Check if config contains multi-section documents"""
+    return 'documents' in config and len(config['documents']) > 0
+
+
+def has_sections(config):
+    """Check if config contains standalone sections"""
+    return 'sections' in config and len(config['sections']) > 0
 
 
 def load_url_config(config_path):
@@ -40,6 +51,15 @@ def process_section(section_config, scraper, settings, output_dir, save_html=Fal
     print(f"Processing: {section_name}")
     print(f"{'=' * 60}")
 
+    # Get base URL for this section - either from config or extract from first page URL
+    if 'base_url' in section_config:
+        base_url = section_config['base_url']
+    else:
+        # Extract base URL from the first page URL
+        first_page_url = section_config['pages'][0]['url']
+        parsed = urlparse(first_page_url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+
     # Scrape pages
     print("\n[1/5] Scraping web pages...")
     scraped_content = scraper.scrape_url_list({'sections': [section_config]})
@@ -55,12 +75,23 @@ def process_section(section_config, scraper, settings, output_dir, save_html=Fal
     # Create URL map for internal linking
     print("\n[2/5] Processing HTML content...")
     url_map = create_url_map(section_data['pages'])
-    processor = HTMLProcessor(scraper.base_url, url_map)
+    processor = HTMLProcessor(base_url, url_map)
 
     # Process all pages
     for page in section_data['pages']:
+        if page['content'] is None:
+            print(f"  ⚠ Skipping page with no content: {page['title']}")
+            continue
         section_id = HTMLProcessor.slugify(page['title'])
-        page['content'] = processor.process_page(page['content'], section_id)
+        try:
+            page['content'] = processor.process_page(page['content'], section_id)
+        except Exception as e:
+            print(f"  ✗ Error processing page '{page['title']}' ({page['url']}): {e}")
+            print(f"     Content type: {type(page['content'])}")
+            raise
+
+    # Filter out pages with None content
+    section_data['pages'] = [p for p in section_data['pages'] if p['content'] is not None]
 
     print(f"  Processed {len(url_map)} pages")
 
@@ -105,6 +136,136 @@ def process_section(section_config, scraper, settings, output_dir, save_html=Fal
     return output_path
 
 
+def process_document(document_config, scraper, settings, output_dir, save_html=False):
+    """Process a multi-section document and generate a single PDF
+
+    Args:
+        document_config: Document configuration with 'sections' list
+        scraper: DigitalNSWScraper instance
+        settings: Application settings
+        output_dir: Path to output directory
+        save_html: Whether to save intermediate HTML
+
+    Returns:
+        Path to generated PDF or None if failed
+    """
+    document_name = document_config['document_name']
+    output_filename = document_config.get('output_filename', f"{HTMLProcessor.slugify(document_name)}.pdf")
+
+    print(f"\n{'=' * 60}")
+    print(f"Processing Document: {document_name}")
+    print(f"  Contains {len(document_config['sections'])} sections")
+    print(f"{'=' * 60}")
+
+    # Scrape all sections
+    all_section_data = []
+    all_pages = []
+
+    for i, section_config in enumerate(document_config['sections'], 1):
+        section_name = section_config['section_name']
+        print(f"\n[Section {i}/{len(document_config['sections'])}] {section_name}")
+
+        # Get base URL
+        if 'base_url' in section_config:
+            base_url = section_config['base_url']
+        else:
+            first_page_url = section_config['pages'][0]['url']
+            parsed = urlparse(first_page_url)
+            base_url = f"{parsed.scheme}://{parsed.netloc}"
+
+        # Scrape this section
+        print("  Scraping web pages...")
+        scraped_content = scraper.scrape_url_list({'sections': [section_config]})
+
+        if not scraped_content or not scraped_content[0]['pages']:
+            print(f"  ⚠ No pages found for {section_name}")
+            continue
+
+        section_data = scraped_content[0]
+        page_count = len(section_data['pages'])
+        print(f"  Scraped {page_count} pages")
+
+        # Collect all pages for URL mapping
+        all_pages.extend(section_data['pages'])
+        all_section_data.append((section_data, base_url))
+
+    if not all_section_data:
+        print(f"  ⚠ No content found for document {document_name}")
+        return None
+
+    # Create unified URL map for all sections
+    print(f"\nProcessing HTML content for all sections...")
+    url_map = create_url_map(all_pages)
+
+    # Process each section's pages
+    for section_data, base_url in all_section_data:
+        processor = HTMLProcessor(base_url, url_map)
+
+        for page in section_data['pages']:
+            if page['content'] is None:
+                print(f"  ⚠ Skipping page with no content: {page['title']}")
+                continue
+
+            section_id = HTMLProcessor.slugify(page['title'])
+            try:
+                page['content'] = processor.process_page(page['content'], section_id)
+            except Exception as e:
+                print(f"  ✗ Error processing page '{page['title']}' ({page['url']}): {e}")
+                print(f"     Content type: {type(page['content'])}")
+                raise
+
+        # Filter out None content
+        section_data['pages'] = [p for p in section_data['pages'] if p['content'] is not None]
+
+    total_pages = sum(len(sd['pages']) for sd, _ in all_section_data)
+    print(f"  Processed {total_pages} total pages across {len(all_section_data)} sections")
+
+    # Process images if enabled
+    if settings.DOWNLOAD_IMAGES:
+        print("\nProcessing images...")
+        image_handler = ImageHandler(settings)
+        for section_data, _ in all_section_data:
+            for page in section_data['pages']:
+                page['content'] = image_handler.process_images(
+                    page['content'],
+                    output_dir / 'images'
+                )
+        print("  Images processed")
+    else:
+        print("\nSkipping image processing")
+
+    # Compile into single HTML document
+    print("\nCompiling HTML document...")
+    compiler = PDFCompiler(settings)
+
+    # Extract just the section_data objects
+    sections_list = [section_data for section_data, _ in all_section_data]
+
+    html_document, generation_timestamp = compiler.compile_html_document(
+        sections_list,
+        document_config.get('metadata', {'title': document_name})
+    )
+
+    if save_html:
+        html_path = output_dir / 'html' / output_filename.replace('.pdf', '.html')
+        html_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(html_document)
+        print(f"  HTML saved to: {html_path}")
+
+    # Generate PDF
+    print("\nGenerating PDF...")
+    output_path = output_dir / output_filename
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    compiler.generate_pdf(html_document, str(output_path), generation_timestamp)
+
+    print(f"✓ {document_name} complete!")
+    print(f"  Output: {output_path.absolute()}")
+
+    return output_path
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Compile Digital NSW standards into separate PDF documents'
@@ -138,39 +299,81 @@ def main():
     # Load configuration
     print("\nLoading configuration...")
     url_config = load_url_config(args.config)
-    sections = url_config['sections']
 
-    # Filter sections if specific section requested
+    # Determine what to process
+    process_documents = has_documents(url_config)
+    process_sections = has_sections(url_config)
+
+    # Filter by --section argument if provided
     if args.section:
-        sections = [s for s in sections if s['section_name'] == args.section]
-        if not sections:
+        if process_documents:
+            # Filter documents that contain the specified section
+            filtered_docs = []
+            for doc in url_config.get('documents', []):
+                matching_sections = [s for s in doc['sections'] if s['section_name'] == args.section]
+                if matching_sections:
+                    # Create a copy of the document with only the matching section
+                    filtered_doc = doc.copy()
+                    filtered_doc['sections'] = matching_sections
+                    filtered_docs.append(filtered_doc)
+            url_config['documents'] = filtered_docs
+        if process_sections:
+            # Filter standalone sections
+            url_config['sections'] = [
+                s for s in url_config.get('sections', [])
+                if s['section_name'] == args.section
+            ]
+
+        if (not url_config.get('documents') and not url_config.get('sections')):
             print(f"Error: Section '{args.section}' not found in configuration")
             sys.exit(1)
 
-    print(f"  Loaded {len(sections)} section(s) to process")
+    total_items = len(url_config.get('documents', [])) + len(url_config.get('sections', []))
+    print(f"  Loaded {total_items} item(s) to process")
 
     # Initialize scraper
     scraper = DigitalNSWScraper(settings)
     output_dir = Path(args.output_dir)
 
-    # Process each section separately
     generated_pdfs = []
-    for i, section_config in enumerate(sections, 1):
-        print(f"\n\nSection {i}/{len(sections)}")
-        try:
-            pdf_path = process_section(
-                section_config,
-                scraper,
-                settings,
-                output_dir,
-                args.save_html
-            )
-            if pdf_path:
-                generated_pdfs.append(pdf_path)
-        except Exception as e:
-            print(f"  ✗ Error processing {section_config['section_name']}: {e}")
-            import traceback
-            traceback.print_exc()
+
+    # Process multi-section documents
+    if process_documents:
+        for i, document_config in enumerate(url_config['documents'], 1):
+            print(f"\n\nDocument {i}/{len(url_config['documents'])}")
+            try:
+                pdf_path = process_document(
+                    document_config,
+                    scraper,
+                    settings,
+                    output_dir,
+                    args.save_html
+                )
+                if pdf_path:
+                    generated_pdfs.append(pdf_path)
+            except Exception as e:
+                print(f"  ✗ Error processing {document_config['document_name']}: {e}")
+                import traceback
+                traceback.print_exc()
+
+    # Process standalone sections
+    if process_sections:
+        for i, section_config in enumerate(url_config['sections'], 1):
+            print(f"\n\nSection {i}/{len(url_config['sections'])}")
+            try:
+                pdf_path = process_section(
+                    section_config,
+                    scraper,
+                    settings,
+                    output_dir,
+                    args.save_html
+                )
+                if pdf_path:
+                    generated_pdfs.append(pdf_path)
+            except Exception as e:
+                print(f"  ✗ Error processing {section_config['section_name']}: {e}")
+                import traceback
+                traceback.print_exc()
 
     # Summary
     print("\n\n" + "=" * 60)

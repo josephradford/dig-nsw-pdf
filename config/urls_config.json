@@ -1,4 +1,134 @@
 {
+  "documents": [
+    {
+      "document_name": "NSW Design System",
+      "output_filename": "nsw-design-system.pdf",
+      "metadata": {
+        "title": "NSW Design System",
+        "author": "Compiled from NSW Design System",
+        "subject": "NSW Government Design System Documentation"
+      },
+      "sections": [
+        {
+          "section_name": "About",
+          "base_url": "https://designsystem.nsw.gov.au",
+          "base_path": "/docs/content/about",
+          "max_depth": 2,
+          "pages": [
+            {
+              "title": "What is Design System",
+              "url": "https://designsystem.nsw.gov.au/docs/content/about/what-is-design-system.html",
+              "order": 1
+            }
+          ]
+        },
+        {
+          "section_name": "Design",
+          "base_url": "https://designsystem.nsw.gov.au",
+          "base_path": "/docs/content/design",
+          "max_depth": 2,
+          "pages": [
+            {
+              "title": "Getting Started",
+              "url": "https://designsystem.nsw.gov.au/docs/content/design/getting-started.html",
+              "order": 1
+            }
+          ]
+        },
+        {
+          "section_name": "Develop",
+          "base_url": "https://designsystem.nsw.gov.au",
+          "base_path": "/docs/content/develop",
+          "max_depth": 2,
+          "pages": [
+            {
+              "title": "Getting Started",
+              "url": "https://designsystem.nsw.gov.au/docs/content/develop/getting-started.html",
+              "order": 1
+            }
+          ]
+        },
+        {
+          "section_name": "Core Styles",
+          "base_url": "https://designsystem.nsw.gov.au",
+          "base_path": "/core",
+          "max_depth": 1,
+          "pages": [
+            {
+              "title": "Logo",
+              "url": "https://designsystem.nsw.gov.au/core/logo/index.html",
+              "order": 1
+            }
+          ]
+        },
+        {
+          "section_name": "Components",
+          "base_url": "https://designsystem.nsw.gov.au",
+          "base_path": "/components",
+          "max_depth": 1,
+          "pages": [
+            {
+              "title": "Accordion",
+              "url": "https://designsystem.nsw.gov.au/components/accordion/index.html",
+              "order": 1
+            }
+          ]
+        },
+        {
+          "section_name": "Utility Classes",
+          "base_url": "https://designsystem.nsw.gov.au",
+          "base_path": "/docs/content/utilities",
+          "max_depth": 1,
+          "pages": [
+            {
+              "title": "Background",
+              "url": "https://designsystem.nsw.gov.au/docs/content/utilities/background.html",
+              "order": 1
+            }
+          ]
+        },
+        {
+          "section_name": "Methods",
+          "base_url": "https://designsystem.nsw.gov.au",
+          "base_path": "/docs/content/methods",
+          "max_depth": 1,
+          "pages": [
+            {
+              "title": "Search",
+              "url": "https://designsystem.nsw.gov.au/docs/content/methods/search.html",
+              "order": 1
+            }
+          ]
+        },
+        {
+          "section_name": "Templates",
+          "base_url": "https://designsystem.nsw.gov.au",
+          "base_path": "/templates",
+          "max_depth": 1,
+          "pages": [
+            {
+              "title": "Templates",
+              "url": "https://designsystem.nsw.gov.au/templates/index.html",
+              "order": 1
+            }
+          ]
+        },
+        {
+          "section_name": "Contribute",
+          "base_url": "https://designsystem.nsw.gov.au",
+          "base_path": "/docs/content/contribute",
+          "max_depth": 2,
+          "pages": [
+            {
+              "title": "Contribution Criteria",
+              "url": "https://designsystem.nsw.gov.au/docs/content/contribute/contribution-criteria.html",
+              "order": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "sections": [
     {
       "section_name": "Digital Service Toolkit",

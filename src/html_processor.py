@@ -55,6 +55,12 @@ class HTMLProcessor:
 
     def process_tables(self, soup):
         """Ensure tables are PDF-friendly"""
+        # Get the root BeautifulSoup object (needed for new_tag method)
+        # If soup is a Tag, traverse up to find the root BeautifulSoup object
+        root = soup
+        while hasattr(root, 'parent') and root.parent is not None:
+            root = root.parent
+
         for table in soup.find_all('table'):
             # Add class for styling
             table['class'] = table.get('class', []) + ['pdf-table']
@@ -64,7 +70,7 @@ class HTMLProcessor:
                 # First row might be header
                 first_row = table.find('tr')
                 if all(cell.name == 'th' for cell in first_row.find_all(['th', 'td'])):
-                    thead = soup.new_tag('thead')
+                    thead = root.new_tag('thead')
                     first_row.wrap(thead)
 
         return soup

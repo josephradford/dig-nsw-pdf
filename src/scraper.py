@@ -15,8 +15,6 @@ class DigitalNSWScraper:
     """
 
     def __init__(self, config):
-        self.base_url = "https://www.digital.nsw.gov.au"
-
         # Use cached session to avoid repeated scraping during development
         self.session = requests_cache.CachedSession(
             'nsw_digital_cache',
@@ -59,16 +57,17 @@ class DigitalNSWScraper:
         """Extract main content from page"""
         soup = BeautifulSoup(html, 'lxml')
 
-        # Find main content area
+        # Find main content area - try multiple selectors
         main_content = (
             soup.find('main') or
             soup.find(id='main-content') or
             soup.find('article') or
-            soup.find(class_='content')
+            soup.find(class_='content') or
+            soup.find('body')  # Fallback to body if nothing else found
         )
 
         if not main_content:
-            logger.warning(f"Could not find main content area for {url}")
+            logger.warning(f"Could not find any content area for {url}")
             return None
 
         # Remove unwanted elements
@@ -85,11 +84,12 @@ class DigitalNSWScraper:
 
         return main_content
 
-    def extract_internal_links(self, soup, base_path):
+    def extract_internal_links(self, soup, base_url, base_path):
         """
         Extract internal links from page that are within the same section,
         preserving the order they appear in the HTML (visual order)
 
+        base_url: e.g., 'https://www.digital.nsw.gov.au'
         base_path: e.g., '/delivery/digital-service-toolkit'
 
         Returns:
@@ -98,18 +98,21 @@ class DigitalNSWScraper:
         internal_links = []
         seen_links = set()
 
+        # Extract the expected netloc from base_url
+        expected_netloc = urlparse(base_url).netloc
+
         for link in soup.find_all('a', href=True):
             href = link['href']
 
             # Convert to absolute URL
             if not href.startswith('http'):
-                href = urljoin(self.base_url, href)
+                href = urljoin(base_url, href)
 
             # Parse URL
             parsed = urlparse(href)
 
             # Check if it's an internal link within the same section
-            if (parsed.netloc == 'www.digital.nsw.gov.au' and
+            if (parsed.netloc == expected_netloc and
                 parsed.path.startswith(base_path) and
                 not parsed.path.endswith(('.pdf', '.docx', '.xlsx', '.zip'))):
 
@@ -123,12 +126,13 @@ class DigitalNSWScraper:
 
         return internal_links
 
-    def scrape_page_recursive(self, url, base_path, depth=0, max_depth=3, parent_url=None, display_order=0):
+    def scrape_page_recursive(self, url, base_url, base_path, depth=0, max_depth=3, parent_url=None, display_order=0):
         """
         Recursively scrape a page and its internal links
 
         Args:
             url: URL to scrape
+            base_url: Base URL for this site (e.g., 'https://www.digital.nsw.gov.au')
             base_path: Base path for this section (e.g., '/delivery/digital-service-toolkit')
             depth: Current recursion depth
             max_depth: Maximum recursion depth
@@ -178,7 +182,7 @@ class DigitalNSWScraper:
 
         # Extract and follow internal links
         if depth < max_depth:
-            internal_links = self.extract_internal_links(soup, base_path)
+            internal_links = self.extract_internal_links(soup, base_url, base_path)
 
             # Filter to direct children only (one level deeper) for display ordering
             parsed_current = urlparse(url)
@@ -198,7 +202,7 @@ class DigitalNSWScraper:
                 if link_url not in self.visited_urls:
                     logger.info(f"Following internal link: {link_url} (depth {depth + 1})")
                     child_pages = self.scrape_page_recursive(
-                        link_url, base_path, depth + 1, max_depth,
+                        link_url, base_url, base_path, depth + 1, max_depth,
                         parent_url=url,
                         display_order=0  # Will be set correctly in build_page_tree
                     )
@@ -216,8 +220,17 @@ class DigitalNSWScraper:
                 'pages': []
             }
 
+            # Get base URL - either from config or extract from first page URL
+            if 'base_url' in section:
+                base_url = section['base_url']
+            else:
+                # Extract base URL from the first page URL
+                first_page_url = section['pages'][0]['url']
+                parsed = urlparse(first_page_url)
+                base_url = f"{parsed.scheme}://{parsed.netloc}"
+
             # Get base path for this section
-            base_path = section.get('base_path', '/delivery')
+            base_path = section.get('base_path', '/')
 
             # Reset visited URLs and direct children map for each section
             self.visited_urls = set()
@@ -227,6 +240,7 @@ class DigitalNSWScraper:
                 # Use recursive scraping
                 scraped_pages = self.scrape_page_recursive(
                     page['url'],
+                    base_url,
                     base_path,
                     depth=0,
                     max_depth=section.get('max_depth', 3)
